@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ICFES Saber 11 - Estudio Diario</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; min-height: 100vh; }
+
+  .header { background: linear-gradient(135deg, #1a237e, #283593); color: white; padding: 16px 24px; display: flex; align-items: center; gap: 12px; }
+  .header h1 { font-size: 20px; font-weight: 600; }
+  .header span { font-size: 13px; opacity: 0.8; }
+
+  .nav { display: flex; background: white; border-bottom: 2px solid #e0e0e0; }
+  .nav-btn { flex: 1; padding: 12px 8px; border: none; background: none; cursor: pointer; font-size: 13px; color: #666; font-weight: 500; border-bottom: 3px solid transparent; transition: all 0.2s; }
+  .nav-btn.active { color: #1a237e; border-bottom-color: #1a237e; }
+  .nav-btn:hover { background: #f5f5f5; }
+
+  .page { display: none; padding: 20px; max-width: 760px; margin: 0 auto; }
+  .page.active { display: block; }
+
+  /* HOME */
+  .area-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+  .area-card { background: white; border-radius: 12px; padding: 20px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; position: relative; overflow: hidden; }
+  .area-card:hover { border-color: #1a237e; transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+  .area-card.selected { border-color: #1a237e; background: #e8eaf6; }
+  .area-card .icon { font-size: 32px; margin-bottom: 8px; }
+  .area-card h3 { font-size: 14px; font-weight: 600; color: #1a237e; }
+  .area-card .progress-bar { height: 4px; background: #e0e0e0; border-radius: 2px; margin-top: 8px; }
+  .area-card .progress-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #1a237e, #5c6bc0); transition: width 0.4s; }
+  .area-card .pct { font-size: 11px; color: #888; margin-top: 4px; }
+
+  .start-btn { width: 100%; margin-top: 20px; padding: 16px; background: linear-gradient(135deg, #1a237e, #283593); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+  .start-btn:hover { opacity: 0.9; }
+  .start-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+  .today-badge { background: #e8f5e9; border: 1px solid #a5d6a7; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #2e7d32; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+  /* QUIZ */
+  .quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .quiz-area-tag { background: #e8eaf6; color: #1a237e; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+  .quiz-progress { font-size: 13px; color: #666; }
+  .quiz-score-live { font-size: 13px; font-weight: 600; color: #1a237e; }
+
+  .progress-quiz { height: 6px; background: #e0e0e0; border-radius: 3px; margin-bottom: 20px; }
+  .progress-quiz-fill { height: 100%; background: linear-gradient(90deg, #1a237e, #5c6bc0); border-radius: 3px; transition: width 0.3s; }
+
+  .question-box { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  .question-num { font-size: 11px; color: #888; font-weight: 600; text-transform: uppercase; margin-bottom: 8px; }
+  .question-text { font-size: 15px; color: #212121; line-height: 1.6; }
+  .question-context { background: #f9f9f9; border-left: 3px solid #5c6bc0; padding: 12px; border-radius: 0 8px 8px 0; margin: 12px 0; font-size: 13px; color: #444; line-height: 1.5; }
+
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .option-btn { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; background: white; border: 2px solid #e0e0e0; border-radius: 10px; cursor: pointer; text-align: left; font-size: 14px; color: #333; transition: all 0.2s; }
+  .option-btn:hover:not(:disabled) { border-color: #5c6bc0; background: #f3f4fc; }
+  .option-btn .letra { font-weight: 700; color: #5c6bc0; min-width: 20px; }
+  .option-btn.correct { border-color: #2e7d32; background: #e8f5e9; }
+  .option-btn.correct .letra { color: #2e7d32; }
+  .option-btn.wrong { border-color: #c62828; background: #ffebee; }
+  .option-btn.wrong .letra { color: #c62828; }
+  .option-btn:disabled { cursor: not-allowed; }
+
+  .feedback-box { background: white; border-radius: 12px; padding: 16px; margin-top: 12px; border-left: 4px solid #e0e0e0; }
+  .feedback-box.correct { border-color: #2e7d32; }
+  .feedback-box.wrong { border-color: #c62828; }
+  .feedback-title { font-weight: 700; font-size: 14px; margin-bottom: 6px; }
+  .feedback-title.correct { color: #2e7d32; }
+  .feedback-title.wrong { color: #c62828; }
+  .feedback-text { font-size: 13px; color: #444; line-height: 1.6; }
+  .loading-explanation { font-size: 13px; color: #888; font-style: italic; }
+
+  .next-btn { width: 100%; padding: 14px; background: #1a237e; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 12px; }
+  .next-btn:hover { background: #283593; }
+
+  /* RESULTS */
+  .result-card { background: white; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 16px; }
+  .result-score { font-size: 56px; font-weight: 700; color: #1a237e; }
+  .result-label { font-size: 14px; color: #666; margin-top: 4px; }
+  .result-msg { font-size: 16px; font-weight: 600; color: #333; margin-top: 12px; }
+  .area-results { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+  .area-result-item { background: white; border-radius: 10px; padding: 14px; text-align: center; }
+  .area-result-item .ar-name { font-size: 12px; color: #666; }
+  .area-result-item .ar-score { font-size: 22px; font-weight: 700; color: #1a237e; }
+  .area-result-item .ar-bar { height: 4px; background: #e0e0e0; border-radius: 2px; margin-top: 6px; }
+  .area-result-item .ar-fill { height: 100%; border-radius: 2px; }
+
+  .repeat-btn { width: 100%; padding: 14px; background: white; border: 2px solid #1a237e; color: #1a237e; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 8px; }
+  .home-btn-r { width: 100%; padding: 14px; background: #1a237e; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 8px; }
+
+  /* STATS */
+  .stats-card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 12px; }
+  .stats-title { font-size: 15px; font-weight: 700; color: #1a237e; margin-bottom: 14px; }
+  .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-label { font-size: 13px; color: #555; }
+  .stat-val { font-size: 14px; font-weight: 700; color: #1a237e; }
+  .area-stat { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .area-stat-name { font-size: 13px; font-weight: 600; color: #333; display: flex; justify-content: space-between; }
+  .area-stat-bar { height: 8px; background: #e0e0e0; border-radius: 4px; }
+  .area-stat-fill { height: 100%; border-radius: 4px; }
+  .day-history { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+  .day-item { display: flex; justify-content: space-between; align-items: center; font-size: 13px; padding: 8px 10px; background: #f9f9f9; border-radius: 8px; }
+  .day-score-tag { padding: 2px 10px; border-radius: 12px; font-weight: 700; font-size: 12px; }
+  .clear-btn { width: 100%; padding: 12px; background: white; border: 2px solid #c62828; color: #c62828; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 8px; }
+
+  .emoji-big { font-size: 48px; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>📚 ICFES Saber 11 — Estudio Diario</h1>
+    <span id="fecha-hoy"></span>
+  </div>
+</div>
+
+<div class="nav">
+  <button class="nav-btn active" onclick="showPage('home')">🏠 Inicio</button>
+  <button class="nav-btn" onclick="showPage('quiz')" id="nav-quiz">📝 Practicar</button>
+  <button class="nav-btn" onclick="showPage('stats')">📊 Estadísticas</button>
+</div>
+
+<!-- HOME -->
+<div class="page active" id="page-home">
+  <div id="today-info"></div>
+  <p style="font-size:14px;color:#555;margin-bottom:12px;">Selecciona las áreas que quieres practicar hoy (5 preguntas por área):</p>
+  <div class="area-grid" id="area-grid"></div>
+  <button class="start-btn" id="start-btn" onclick="startQuiz()">▶ Comenzar práctica</button>
+</div>
+
+<!-- QUIZ -->
+<div class="page" id="page-quiz">
+  <div class="quiz-header">
+    <span class="quiz-area-tag" id="quiz-area-tag">Área</span>
+    <span class="quiz-progress" id="quiz-progress">1 / 5</span>
+    <span class="quiz-score-live" id="quiz-score-live">✓ 0</span>
+  </div>
+  <div class="progress-quiz"><div class="progress-quiz-fill" id="progress-bar" style="width:0%"></div></div>
+  <div id="quiz-content"></div>
+</div>
+
+<!-- RESULTS -->
+<div class="page" id="page-results">
+  <div id="results-content"></div>
+</div>
+
+<!-- STATS -->
+<div class="page" id="page-stats">
+  <div id="stats-content"></div>
+</div>
+
+<script>
+// ========== BANCO DE PREGUNTAS ==========
+const PREGUNTAS = {
+  sociales: [
+    {
+      id:'s1', num:1,
+      texto:'La administradora de un conjunto residencial prohíbe tener mascotas alegando que son agresivas basándose en videos de internet. Los dueños de mascotas se quejan. ¿Es válido el argumento de la administración?',
+      opciones:['Sí, porque busca velar por el bienestar de los niños.','Sí, porque las redes sociales son el principal medio de información.','No, porque está generalizando el comportamiento de todas las mascotas.','No, porque es conocimiento general que todas las mascotas son dóciles.'],
+      respuesta:2,
+      explicacion:'La administradora comete una GENERALIZACIÓN: ver videos de algunas mascotas agresivas no significa que TODAS las mascotas lo sean. En el ICFES, cuando un argumento saca una conclusión general a partir de pocos casos, se llama "generalización apresurada" y se considera inválido.'
+    },
+    {
+      id:'s2', num:2,
+      texto:'Simón Bolívar en su Última Proclama habló de consolidar la unión y se separó del mando al desconfiar de sí mismo. ¿En cuál contexto histórico pronunció estas palabras?',
+      opciones:['Al final de la guerra de los Mil Días en 1902.','En 1810, al proponer la libertad de vientres.','Al inicio de las guerras de independencia por falta de apoyo.','En 1830, al disolverse la Gran Colombia por la desconexión territorial y oposición a su dictadura.'],
+      respuesta:3,
+      explicacion:'La Última Proclama de Bolívar (1830) ocurrió cuando la Gran Colombia se disolvió. Bolívar habla de "consolidar la unión" porque esa unión (Venezuela, Colombia, Ecuador) estaba rompiéndose. Además menciona "la oposición a su desprendimiento", refiriéndose a quienes se oponían a él.'
+    },
+    {
+      id:'s3', num:3,
+      texto:'Los papas Juan Pablo II (1987) y Benedicto XVI (2008) hablaron sobre el divorcio. ¿Cómo cambió la visión entre ambos discursos?',
+      opciones:['Cambió radicalmente: el primero ve el divorcio como ofensa a Dios, el segundo no.','Cambió parcialmente: ambos consideran que el divorcio atenta contra Dios y la familia, pero el segundo abre la posibilidad de perdón para quienes se divorcian.','Cambió radicalmente: el primero defiende la familia y el segundo no.','Cambió radicalmente: el primero cree que la libertad debe estar sujeta a leyes divinas, y el segundo no.'],
+      respuesta:1,
+      explicacion:'Ambos papas coinciden en que el divorcio es malo (no cambio radical). Pero Juan Pablo II es más estricto, mientras Benedicto XVI dice que la Iglesia "piensa en los hombres y mujeres que han cometido estos actos" y busca su recuperación, es decir, abre la puerta al perdón. Por eso el cambio es PARCIAL.'
+    },
+    {
+      id:'s4', num:4,
+      texto:'Un gobierno reemplaza luminarias por LED que favorecen el reconocimiento facial. Ecologistas advierten que afecta animales silvestres. ¿Qué derecho colectivo puede verse vulnerado?',
+      opciones:['La calidad del servicio del alumbrado público.','El disfrute de un ambiente sano, ya que omitir la protección de la fauna afecta la preservación de los ecosistemas.','La garantía de un desarrollo sostenible porque la energía proviene de hidroeléctrica.','La destinación del espacio público al uso común.'],
+      respuesta:1,
+      explicacion:'El problema es ambiental: la luz artificial nocturna daña a los animales silvestres y eso afecta la BIODIVERSIDAD. Esto vulnera el derecho al AMBIENTE SANO, que incluye proteger fauna y ecosistemas para las generaciones presentes y futuras. Las otras opciones hablan de temas que no aparecen en el texto.'
+    },
+    {
+      id:'s5', num:5,
+      texto:'Leonardo dice que un científico famoso afirmó que existe vida extraterrestre, y que por eso no le queda duda. Juana dice que el argumento es inválido. ¿Tiene razón Juana?',
+      opciones:['No, porque la veracidad depende de la persona que realiza la afirmación.','Sí, porque la veracidad de un argumento no depende solo de quien lo dice, sino de las evidencias que lo apoyan.','No, porque Leonardo presentó su opinión y cualquier opinión es un argumento válido.','Sí, porque Leonardo presentó un argumento que contradice la opinión de Juana.'],
+      respuesta:1,
+      explicacion:'Esto es lo que se llama "argumento de autoridad": decir que algo es verdad porque lo dijo alguien famoso. En el ICFES, ese tipo de argumento es DÉBIL porque lo que hace válido un argumento son las EVIDENCIAS y las pruebas, no el prestigio de quien lo dice.'
+    },
+    {
+      id:'s6', num:6,
+      texto:'Brasil tiene un movimiento que limita contenidos escolares de género, sexualidad, política y filosofía. Si se aplicara en Colombia, ¿por qué iría en contra de la Constitución?',
+      opciones:['Porque solo los jueces colombianos pueden impulsar estas leyes.','Porque solo el Ministerio de Educación puede definir el contenido escolar.','Porque va en contra de las libertades fundamentales de opinión y pensamiento, entre otros derechos consagrados en la Constitución.','Porque la Constitución se escribió primero y deben revisarse las normas antiguas antes.'],
+      respuesta:2,
+      explicacion:'La Constitución Política de Colombia protege la LIBERTAD DE OPINIÓN, PENSAMIENTO y CÁTEDRA. Limitar temas en la escuela por considerarlos "no neutrales" va directamente en contra de estos derechos fundamentales. Las otras opciones mezclan temas que no son el punto central.'
+    },
+    {
+      id:'s7', num:7,
+      texto:'La industria del aceite de palma genera empleo pero también daño ambiental. La ministra propone prohibir todos los productos con aceite de palma. ¿Cuál NO es un posible impacto de esa solución?',
+      opciones:['Afectaría negativamente los ingresos de muchos habitantes de las grandes ciudades.','Mejoraría el medio ambiente, pues los suelos serían más fértiles.','Afectaría la producción de otros bienes que tienen como ingrediente principal el aceite de palma.','Mejoraría las posibilidades de encontrar empleo de quienes habitan las zonas donde se cultiva la palma.'],
+      respuesta:3,
+      explicacion:'La pregunta pide lo que NO es un impacto de PROHIBIR el aceite de palma. Si se prohíbe, la industria de la palma se cae → las personas que trabajan en esas zonas PERDERÍAN empleo, no lo ganarían. Por eso la opción D es la que NO corresponde como impacto real de la propuesta.'
+    },
+    {
+      id:'s8', num:8,
+      texto:'Una persona dice que una película infantil "promueve la agenda LGBT en los corazones y las mentes de nuestros niños". ¿Cuál es una posible consecuencia directa de esta afirmación?',
+      opciones:['Que los estadounidenses crean que se desconoce la libertad de expresión.','Que la comunidad LGBT sienta que está siendo juzgada negativamente y su presencia es rechazada, especialmente cuando hay niños cerca.','Que la comunidad cristiana sienta que la mejor forma de hacer valer sus creencias es dejar de ver películas.','Que la compañía piense que la comunidad LGBT debe incluirse más en sus producciones.'],
+      respuesta:1,
+      explicacion:'La afirmación presenta la presencia LGBT como algo peligroso para los niños. La consecuencia DIRECTA es que la comunidad LGBT se sienta RECHAZADA y juzgada negativamente. Las otras opciones son posibles, pero no son la consecuencia más directa e inmediata del mensaje del texto.'
+    },
+    {
+      id:'s9', num:9,
+      texto:'En una ciudad hay muchos perros y gatos abandonados. Estudiantes proponen hacer jornadas de esterilización y adopción. ¿Qué tipo de impacto tiene esa propuesta en la salud pública?',
+      opciones:['Positivo, porque las personas son más felices cuando adoptan un animal.','Positivo, porque las esterilizaciones desaceleran el crecimiento de la población animal y se evita la transmisión de enfermedades como la rabia.','Negativo, porque los recursos se destinarán a procedimientos médicos que podrían invertirse en salarios de los veterinarios.','Negativo, porque en las jornadas de esterilización se pueden propagar las enfermedades de los animales.'],
+      respuesta:1,
+      explicacion:'La esterilización tiene dos efectos directos en salud pública: 1) Controla la población de animales callejeros (menos sobrepoblación), 2) Reduce la transmisión de enfermedades zoonóticas (que pasan del animal al humano) como la RABIA. Por eso el impacto es POSITIVO y DIRECTO en salud pública.'
+    },
+    {
+      id:'s10', num:10,
+      texto:'Rodrigo Londoño habla de reconciliación y perdón post-acuerdo. Jorge Briceño dice que "el fusil es el garante" y que seguirán combates. ¿Qué relación temporal tienen estos discursos?',
+      opciones:['El de Londoño antecede al de Briceño, porque Briceño menciona el reconocimiento de las FARC como partido político.','El de Londoño antecede al de Briceño, porque Briceño da cuenta del cese al fuego definitivo.','El de Briceño antecede al de Londoño, porque Londoño señala que las FARC ya son parte del Gobierno.','El de Briceño antecede al de Londoño, porque este último da cuenta de un panorama de aspiraciones políticas fruto de las negociaciones de paz; el otro, de unas negociaciones en proceso.'],
+      respuesta:3,
+      explicacion:'Briceño habla de que "aún no hay cese al fuego" y que seguirán combates → es durante la guerra. Londoño habla de "reconciliación, perdón y aspiraciones políticas" → es después del acuerdo de paz. Por eso Briceño va PRIMERO (guerra) y Londoño va DESPUÉS (post-acuerdo).'
+    },
+    {
+      id:'s11', num:11,
+      texto:'Un artículo habla de la apertura económica del gobierno Barco: abrir puertas a importaciones, capital foráneo y diversificar exportaciones. ¿Por qué se refiere a la apertura económica?',
+      opciones:['Porque señala la importancia de proteger la industria nacional frente a la competencia extranjera.','Porque insiste en la necesidad de fomentar el libre comercio y la reducción de las barreras para el intercambio comercial entre países.','Porque advierte sobre la necesidad de elaborar políticas que reduzcan la pobreza extrema.','Porque reconoce el impacto negativo que la globalización puede tener en el empleo.'],
+      respuesta:1,
+      explicacion:'La apertura económica significa justamente lo contrario al proteccionismo: ABRIR el mercado al comercio internacional, reducir barreras, permitir importaciones y exportaciones. El texto dice que antes había "proteccionismo" que estancaba el comercio, y Barco decidió abrir las puertas. Eso es libre comercio.'
+    },
+    {
+      id:'s12', num:12,
+      texto:'Gremios minero y petrolero quieren explotar la Amazonia. Pueblos indígenas aislados la protegen. ¿Entre quiénes sería más probable que se genere un conflicto?',
+      opciones:['Entre los pueblos indígenas y los académicos.','Entre el gremio minero y los pueblos indígenas.','Entre el Ministerio de Minas y Energía y el gremio petrolero.','Entre los grupos madereros ilegales y el gremio petrolero.'],
+      respuesta:1,
+      explicacion:'Los intereses DIRECTAMENTE OPUESTOS son: los gremios (quieren explotar) vs. los pueblos indígenas (quieren proteger su territorio). Los académicos apoyan a los indígenas, no se oponen. El Ministerio es mediador. Por eso el conflicto más probable es entre mineros/petroleros e indígenas.'
+    },
+    {
+      id:'s13', num:13,
+      texto:'¿Cuál reacción NO se tuvo en cuenta en la propuesta del Ministerio de Minas sobre la Amazonia?',
+      opciones:['Que los gremios solo quieran beneficiarse ilegalmente.','Que los académicos no tengan en cuenta los beneficios del modelo extractivo legal.','Que los pueblos indígenas aislados voluntariamente no acepten entablar ningún tipo de relación con la sociedad occidental.','Que los grupos madereros ilegales no tengan vías para negociar la explotación legal.'],
+      respuesta:2,
+      explicacion:'La propuesta del Ministerio busca reunir a gremios con comunidades indígenas para negociar. Pero NO consideró que los pueblos AISLADOS VOLUNTARIAMENTE NO QUIEREN NINGÚN CONTACTO con el mundo occidental, ni para negociar. Ese es el punto que se ignoró.'
+    },
+    {
+      id:'s14', num:14,
+      texto:'Campesinos paperos afectados por TLC deciden crear mercados campesinos para vender sin intermediarios. ¿Qué dimensiones se privilegiaron en esa solución?',
+      opciones:['Social y política.','Cultural y social.','Económica y cultural.','Política y comercial.'],
+      respuesta:2,
+      explicacion:'Los mercados campesinos buscan: 1) MEJORAR INGRESOS (dimensión económica: vender a mejores precios), 2) RESCATAR TRADICIONES (dimensión cultural: recuperar prácticas olvidadas del campo). El texto explícitamente menciona ambas. Por eso la respuesta es Económica y cultural.'
+    },
+    {
+      id:'s15', num:15,
+      texto:'Adam Smith dice que la división del trabajo aumenta la productividad porque cada persona se especializa en lo que hace mejor. Según esto, para Smith, el mercado...',
+      opciones:['Genera injusticias sociales al separar a las personas en clases sociales según sus ingresos.','Lleva la economía al fracaso porque no hay coordinación entre productores y consumidores.','Hace que las personas se vuelvan más ignorantes porque no saben cómo producir ciertos bienes.','Es una forma eficiente de repartir los bienes que se han producido mediante la especialización.'],
+      respuesta:3,
+      explicacion:'Smith argumenta: cada quien hace lo que mejor sabe → más productividad → luego intercambia en el mercado. El mercado entonces es el mecanismo que DISTRIBUYE eficientemente lo que cada quien produce con su especialización. Es la base del liberalismo económico clásico.'
+    },
+    {
+      id:'s16', num:16,
+      texto:'Las Zonas Veredales Transitorias (ZVTN) son lugares donde el ejército custodia a los guerrilleros en vez de combatirlos. ¿Por qué es posible esta situación?',
+      opciones:['Porque el Gobierno quiere que el grupo armado conviva con el ejército para que en el futuro haga parte de él.','Porque el Gobierno ha dado un giro hacia el socialismo y puso el ejército al servicio del grupo armado.','Porque el grupo armado ahora controla las ZVTN y tienen miembros del ejército a su disposición.','Porque la función de las Fuerzas Armadas se adecuó al nuevo contexto sociopolítico del país.'],
+      respuesta:3,
+      explicacion:'Un acuerdo de paz cambia el CONTEXTO: ya no hay guerra, hay transición. Por eso el ejército ya no combate sino que CUSTODIA para garantizar el proceso. Las Fuerzas Armadas adaptaron su función al nuevo momento del país. No significa que el gobierno sea socialista ni que los guerrilleros manden.'
+    },
+    {
+      id:'s17', num:17,
+      texto:'La teoría de la dependencia dice que los países del sur son pobres porque proveen materias primas al norte. ¿Qué situación se ajusta a este modelo?',
+      opciones:['Un país latinoamericano procesa materias primas con tecnología propia para venderlas en su propio país.','Una compañía multinacional adquiere materias primas a bajo costo en un país pobre, las procesa y vende productos de valor agregado en ese mismo país pobre.','Un país desarrollado de Europa genera riquezas y comparte su tecnología con países en desarrollo.','Una organización regula el comercio para que los países vendedores de materias primas no cobren de más.'],
+      respuesta:1,
+      explicacion:'La teoría de la dependencia describe exactamente esto: norte compra barato (materias primas del sur), agrega valor (las procesa) y vende caro (de vuelta o al mundo). La opción B lo describe perfectamente: multinacional toma materia prima del país pobre, la procesa, y vende el producto terminado ahí mismo.'
+    },
+    {
+      id:'s18', num:18,
+      texto:'La Cumbre de la Tierra (1992) produjo tres tratados sobre medio ambiente. Los ambientalistas la califican como el evento más importante del siglo XX. ¿Es acertada esa calificación?',
+      opciones:['Acertada, porque tuvo lugar a finales del siglo XX y sigue siendo noticia.','Equivocada, porque los tratados tratan principalmente de clima, biología y agricultura.','Acertada, porque llevó a tres tratados que involucran a la mayoría de países y tienen que ver directamente con emprender acciones conjuntas para la preservación del medio ambiente.','Equivocada, porque no se menciona si las Naciones Unidas reúnen a todos los países ni si las resoluciones son de obligatorio cumplimiento.'],
+      respuesta:2,
+      explicacion:'La calificación es acertada porque: 1) Se firmaron TRES tratados internacionales, 2) Con participación de la MAYORÍA DE PAÍSES del mundo, 3) Todos enfocados en PRESERVAR EL MEDIO AMBIENTE. Eso justifica llamarla el evento ambiental más importante del siglo XX.'
+    },
+    {
+      id:'s19', num:19,
+      texto:'El gobierno investiga el impacto del pez león en los ecosistemas marítimos colombianos. ¿Para cuál objetivo de investigación sería útil la información del artículo sobre este pez?',
+      opciones:['Establecer el impacto económico que provocan las plagas en la fauna y flora del Caribe colombiano.','Promover la caza del pez león para fortalecer la economía de las zonas pesqueras del Caribe.','Determinar los factores que han provocado una disminución de la fauna en algunas costas colombianas.','Establecer la cantidad de especies nativas existentes antes de la aparición del pez león.'],
+      respuesta:2,
+      explicacion:'El artículo explica que el pez león SE ALIMENTA DE PECES JÓVENES nativos (como pargo y mero) y que esto amenaza las especies locales. Esa información sirve directamente para investigar POR QUÉ ha disminuido la fauna nativa en el Caribe colombiano. Las otras opciones no corresponden con los datos del texto.'
+    },
+    {
+      id:'s20', num:20,
+      texto:'En Colombia, el poder público tiene rama judicial, ejecutiva y legislativa. ¿Cuál entidad pertenece a la rama judicial?',
+      opciones:['La Procuraduría General, encargada de investigar y sancionar a funcionarios públicos.','La Fiscalía General, encargada de investigar delitos, calificar procesos y acusar ante jueces.','La Defensoría del Pueblo, encargada de hacer recomendaciones y observaciones a autoridades.','La Policía Nacional, encargada del mantenimiento de las condiciones para el ejercicio de derechos.'],
+      respuesta:1,
+      explicacion:'La FISCALÍA GENERAL DE LA NACIÓN pertenece a la rama judicial. Su función es investigar delitos y acusar a los presuntos infractores ante los jueces. La Procuraduría controla disciplinariamente a funcionarios (rama de control). La Defensoría protege derechos (órgano de control). La Policía depende del ejecutivo.'
+    },
+    {
+      id:'s21', num:21,
+      texto:'La ONU define el desarrollo sostenible como satisfacer las necesidades presentes sin comprometer las futuras. ¿Cuándo es sostenible una política económica?',
+      opciones:['Cuando privilegia la industrialización para generar empleo por encima de disminuir los gases de efecto invernadero.','Cuando da la misma importancia a la generación de riqueza y a la explotación ilimitada de los recursos naturales.','Cuando le da la misma importancia a la generación de riqueza para las personas y a la protección del medio ambiente.','Cuando prohíbe totalmente aprovechar económicamente los bienes y servicios ecosistémicos.'],
+      respuesta:2,
+      explicacion:'El desarrollo sostenible tiene TRES pilares: económico, social y ambiental. Una política es sostenible cuando EQUILIBRA la generación de riqueza (economía) CON la protección ambiental. No puede favorecer solo uno. Por eso la opción C es la correcta: igual importancia a ambos aspectos.'
+    },
+    {
+      id:'s22', num:22,
+      texto:'Un presidente escéptico del cambio climático escribe en redes: "Por el cambio climático que deberíamos preocuparnos es el provocado por armas nucleares". ¿Son confiables sus afirmaciones?',
+      opciones:['Sí, porque como presidente tiene acceso a información precisa sobre los aspectos relevantes del planeta.','No, porque como presidente tiene intereses en que el país que gobierna siga siendo competitivo en la economía mundial.','No, porque al ser político, los temas de ciencias naturales le son ajenos a sus conocimientos.','Sí, porque al ser difundido en una red social con muchos seguidores, tiene un impacto a nivel internacional.'],
+      respuesta:1,
+      explicacion:'Un presidente tiene INTERESES POLÍTICOS Y ECONÓMICOS: si acepta el cambio climático, tendría que firmar acuerdos que limitan la industria de su país y lo hacen menos competitivo. Por eso sus afirmaciones no son confiables: no son objetivas sino que responden a intereses propios. Eso afecta su credibilidad.'
+    }
+  ],
+  matematicas: [
+    {
+      id:'m1', num:23,
+      texto:'Una encuesta muestra que el 98% de los niños prefieren jugar. La tabla muestra frecuencias: todos los días 83%, varias veces a la semana 12%, una vez a la semana 3%, una vez al mes 2%. ¿Es verdad que la suma de esas frecuencias debe ser 98%?',
+      opciones:['Sí, porque al sumar da 100% y debería ser 98%, que es el total de niños encuestados.','Sí, porque el mayor porcentaje que aparece en la gráfica es 98%.','No, porque el 98% representa el total de niños a los que les gusta jugar y los demás porcentajes se refieren a la frecuencia de juego de los niños.','No, porque al sumar los porcentajes el resultado es 198%, que es el total de niños encuestados.'],
+      respuesta:2,
+      explicacion:'Son DOS conjuntos de datos diferentes: el 98% dice CUÁNTOS niños prefieren jugar. El 83%+12%+3%+2% = 100% dice CON QUÉ FRECUENCIA juegan ESE 98%. Es como preguntar "¿cuántos van al gimnasio?" (98%) vs "¿con qué frecuencia van?" (todos los días, a veces, etc.). Son preguntas distintas.'
+    },
+    {
+      id:'m2', num:24,
+      texto:'Se llama PAR al lanzamiento en el que los dos dados muestran el mismo número. ¿Es más probable obtener un once (sumando los dados) que obtener un par?',
+      opciones:['Sí, pues como hay dos formas de obtener once pero solo una forma de obtener cada par, entonces esta última probabilidad es menor.','Sí, pues la probabilidad es mayor cuando los dados muestran distintos números que cuando muestran el mismo número.','No, pues sin importar el resultado que se pida, la probabilidad siempre será la misma para cualquier tipo de resultado.','No, pues solo hay dos formas de obtener once mientras que hay más formas de obtener par; por tanto, esta probabilidad debe ser mayor.'],
+      respuesta:3,
+      explicacion:'Para obtener ONCE: solo (5,6) y (6,5) → 2 casos. Para obtener PAR (igual número en ambos dados): (1,1), (2,2), (3,3), (4,4), (5,5), (6,6) → 6 casos. Como hay MÁS formas de obtener par que once, la probabilidad de par (6/36) es MAYOR que la de once (2/36).'
+    },
+    {
+      id:'m3', num:25,
+      texto:'Armando invirtió 10 millones en bajo riesgo g(x)=x+1 durante el primer trimestre. Todo lo que recibió lo invirtió en alto riesgo f(x)=2x durante el segundo trimestre. ¿Cuánto recibió al término del segundo trimestre?',
+      opciones:['40 millones.','31 millones.','22 millones.','12 millones.'],
+      respuesta:2,
+      explicacion:'Paso 1: Bajo riesgo con 10 millones → g(10) = 10 + 1 = 11 millones recibidos. Paso 2: Esos 11 millones van a alto riesgo → f(11) = 2 × 11 = 22 millones. El truco está en NO sumar el capital inicial de nuevo; la función ya incluye lo que recibe al final del trimestre.'
+    },
+    {
+      id:'m4', num:27,
+      texto:'Una empresa tiene tres pedidos: Pedido 1: 500 kg, Pedido 2: 200 kg, Pedido 3: 1 ton. Un empleado suma: 500 + 200 + 1 = 701 ton. ¿Es correcta esta solución?',
+      opciones:['Incorrecta; el resultado debe estar dado en kg, ya que la mayoría de los valores están en esa unidad.','Correcta; se suman correctamente los tres valores y se utiliza una de las unidades de los pedidos.','Incorrecta; como los datos están en unidades diferentes, no pueden sumarse directamente.','Correcta; el resultado se calcula bien y la unidad utilizada corresponde a la unidad de mayor peso.'],
+      respuesta:2,
+      explicacion:'No puedes sumar 500 kg + 200 kg + 1 ton directamente porque las UNIDADES son diferentes. Es como sumar 500 metros + 1 kilómetro y decir que son 501. Primero debes convertir todo a la misma unidad: 1 ton = 1.000 kg, entonces 500 + 200 + 1.000 = 1.700 kg (no 701 ton).'
+    },
+    {
+      id:'m5', num:28,
+      texto:'Una población de ranas se duplica mensualmente. En el mes 3 hay 160 machos. En el mes 4 habrá 280 machos. ¿Cuál es la probabilidad de elegir al azar una rana hembra en el mes 4?',
+      opciones:['0,35','0,50','0,65','0,80'],
+      respuesta:2,
+      explicacion:'En el mes 3 hay 160 machos y 240 hembras (total 400). La población se duplica: mes 4 → 800 ranas. El enunciado dice habrá 280 machos. Entonces hembras = 800 - 280 = 520. Probabilidad de hembra = 520/800 = 0,65. Siempre verifica: la población total se duplica (400×2=800).'
+    },
+    {
+      id:'m6', num:29,
+      texto:'Estefanía tiene sueldo de $900.000 y ahorra el 3% mensual. Si ahorra durante 10 meses consecutivos, ¿cuánto dinero ahorrará en total?',
+      opciones:['$297.000','$270.000','$240.000','$180.000'],
+      respuesta:1,
+      explicacion:'Paso 1: Ahorro mensual = 3% de $900.000 = 0,03 × 900.000 = $27.000. Paso 2: En 10 meses = 27.000 × 10 = $270.000. El error típico es calcular el 2% del sueldo de Alberto en vez del 3% del de Estefanía. Siempre lee bien los datos de CADA persona.'
+    },
+    {
+      id:'m7', num:30,
+      texto:'Para crear códigos de 4 cifras con dígitos del conjunto {1,2,3,4,5} donde los dígitos pueden repetirse: Paso 1: contar los dígitos del conjunto. Paso 2: elevar a la 4 ese resultado. ¿Cuántos códigos se obtienen?',
+      opciones:['5','75','625','3.125'],
+      respuesta:2,
+      explicacion:'El conjunto tiene 5 dígitos. Para un código de 4 cifras donde pueden repetirse: en cada posición puedes poner cualquiera de los 5 dígitos. Total = 5 × 5 × 5 × 5 = 5⁴ = 625. Es como decir: hay 5 opciones para cada uno de los 4 "espacios" del código.'
+    },
+    {
+      id:'m8', num:33,
+      texto:'Un banco entrega premios: 5 premios de oro a $10.000.000 c/u, 25 premios de plata a $5.000.000 c/u, 100 premios de bronce a $1.000.000 c/u. ¿Cuál tabla muestra el TOTAL de dinero entregado por tipo de premio?',
+      opciones:['Oro: $10M, Plata: $5M, Bronce: $1M','Oro: $50M, Plata: $125M, Bronce: $100M','Oro: $1.000M, Plata: $125M, Bronce: $5M','Oro: $50M, Plata: $100M, Bronce: $125M'],
+      respuesta:1,
+      explicacion:'Debes multiplicar cantidad × monto: Oro: 5 × $10.000.000 = $50.000.000. Plata: 25 × $5.000.000 = $125.000.000. Bronce: 100 × $1.000.000 = $100.000.000. Muchos se confunden y copian solo el monto de cada premio sin multiplicar por la cantidad. ¡No olvides multiplicar!'
+    },
+    {
+      id:'m9', num:36,
+      texto:'Un centro de reciclaje recibió 50 toneladas de aluminio. El 40% fue utilizado para fabricar señales de tránsito. ¿Cuántas toneladas se usaron?',
+      opciones:['20','50','10','40'],
+      respuesta:0,
+      explicacion:'40% de 50 toneladas = 0,40 × 50 = 20 toneladas. Truco rápido: 10% de 50 = 5, entonces 40% = 4 × 5 = 20. En el ICFES, muchas preguntas de porcentajes son así de directas. Siempre convierte el porcentaje a decimal (40% = 0,40) y multiplica.'
+    },
+    {
+      id:'m10', num:38,
+      texto:'6 habitantes hacen aseo de la entrada 2 veces al día, de lunes a sábado (26 días/mes). Paso 1: 26 días. Paso 2: 26 × 12 meses = 312. Paso 3: 312 ÷ 6 = 52. Paso 4: 52 × 2 = 104 veces. ¿Cuántas veces deberá hacer el aseo cada habitante?',
+      opciones:['13 veces.','52 veces.','104 veces.','312 veces.'],
+      respuesta:2,
+      explicacion:'El procedimiento ya está dado. Solo sigue los pasos: 26 días × 12 meses = 312 turnos totales de aseo al año. ÷ 6 habitantes = 52 turnos por persona. × 2 (porque el aseo se hace 2 veces al día) = 104 veces por persona al año. La respuesta es 104.'
+    },
+    {
+      id:'m11', num:40,
+      texto:'La relación de Mosteller: ASC = √w / 5, donde w es el peso en kg. Un paciente pesa 100 kg. ¿Cuál es su ASC?',
+      opciones:['50/5 m²','44/5 m²','10/5 m²','12/5 m²'],
+      respuesta:2,
+      explicacion:'ASC = √100 / 5 = 10 / 5 = 10/5 m². La raíz cuadrada de 100 es 10. Luego divides entre 5. Simple. El truco está en no confundirte con los números y recordar que √100 = 10 (porque 10 × 10 = 100).'
+    },
+    {
+      id:'m12', num:41,
+      texto:'En un torneo, Andrea, Mariana y Catalina suman puntos en 4 intentos. Andrea: 4+1+1+3=9. Mariana: 3+2+4+2=11. Catalina: 2+3+4+4=13. ¿Cuál opción las ordena de mayor a menor?',
+      opciones:['Andrea, Catalina, Mariana.','Catalina, Mariana, Andrea.','Catalina, Andrea, Mariana.','Mariana, Andrea, Catalina.'],
+      respuesta:1,
+      explicacion:'Solo tienes que sumar: Andrea = 4+1+1+3 = 9. Mariana = 3+2+4+2 = 11. Catalina = 2+3+4+4 = 13. De mayor a menor: Catalina (13) > Mariana (11) > Andrea (9). Este tipo de pregunta parece difícil pero es solo suma. ¡No te dejes confundir por la tabla!'
+    },
+    {
+      id:'m13', num:42,
+      texto:'Para f(x) = 5x² + 1, un estudiante propone evaluar en x=3: Paso 1: cambiar x por 3. Paso 2: multiplicar 3 por 2. Paso 3: multiplicar por 5. Paso 4: sumar 1. El docente dice hay un error. ¿En cuál paso?',
+      opciones:['El paso 1, porque la variable debe reemplazarse en los dos términos.','El paso 2, porque el tiempo dado se debe multiplicar por sí mismo (elevar al cuadrado).','El paso 3, porque primero se debe sumar uno, y luego multiplicar por cinco.','El paso 4, porque los términos de la función no son semejantes, y no se pueden sumar.'],
+      respuesta:1,
+      explicacion:'El error está en el Paso 2. Cuando tienes x², debes elevar x al CUADRADO (multiplicarla por sí misma): 3² = 3×3 = 9. El estudiante multiplicó 3×2 = 6, lo cual es INCORRECTO. x² no significa "multiplicar por 2", significa "x elevada a la potencia 2".'
+    },
+    {
+      id:'m14', num:34,
+      texto:'Un grupo familiar tiene ingresos de $1.500.000. Según la tabla de Subsidio Familiar de Vivienda (SFV): el rango $1.339.001 a $1.472.900 corresponde a 2,5 a 2,75 SMMLV y da subsidio de 15 SMMLV. ¿A qué valor en SMMLV puede acceder?',
+      opciones:['9','11','13','22'],
+      respuesta:2,
+      explicacion:'En la tabla, $1.500.000 cae en el rango "Desde $1.472.901 hasta $1.606.800" que corresponde a "2,75 a 3 SMMLV" y da un subsidio de 13 SMMLV. Debes buscar el rango correcto. $1.500.000 está ENTRE $1.472.901 y $1.606.800, entonces el subsidio es 13.'
+    },
+    {
+      id:'m15', num:35,
+      texto:'Una función es estrictamente creciente si x₁ < x₂ implica f(x₁) < f(x₂). La gráfica muestra segmentos que suben, pero hay un tramo horizontal (constante). ¿Es estrictamente creciente?',
+      opciones:['Sí, pues la función no decrece en ningún intervalo.','Sí, pues la función crece a lo largo de todo el intervalo.','No, pues existe un intervalo en el que la función es constante.','No, pues la función no crece de forma lineal en el intervalo.'],
+      respuesta:2,
+      explicacion:'Para ser ESTRICTAMENTE creciente, f(x) debe SIEMPRE aumentar cuando x aumenta. Si hay un tramo HORIZONTAL (constante), significa que cuando x aumenta, f(x) se queda igual → no aumenta → NO es estrictamente creciente. El tramo horizontal rompe la condición de "estrictamente".'
+    },
+    {
+      id:'m16', num:44,
+      texto:'Roberto tiene 5 pruebas con el mismo peso: 60%, 58%, 75%, 80%, 92%. ¿Cuál de estos valores es posible encontrar con esa información?',
+      opciones:['La cantidad de aciertos en cada una de las pruebas.','El peso de las preguntas en cada una de las pruebas.','El promedio del porcentaje de acierto en las pruebas.','La calificación obtenida al finalizar todas las pruebas.'],
+      respuesta:2,
+      explicacion:'Con los porcentajes dados puedes calcular el PROMEDIO: (60+58+75+80+92)/5 = 365/5 = 73%. Para saber la cantidad de aciertos necesitarías saber cuántas preguntas tenía cada prueba (no se da). Para la calificación final necesitarías la escala de notas (tampoco se da). Solo el promedio es calculable.'
+    }
+  ],
+  ciencias: [
+    {
+      id:'c1', num:45,
+      texto:'Según el esquema de wifi zonas comunitarias, ¿cuál razón argumenta la necesidad de conectar el cable de fibra óptica?',
+      opciones:['El cable de fibra óptica es el que lleva la corriente a las antenas.','El cable de fibra óptica es la única forma de comunicarse con internet.','El cable de fibra óptica es una segunda forma de conectarse con internet.','El cable de fibra óptica llega a cada antena y repite la señal de internet.'],
+      respuesta:2,
+      explicacion:'En el esquema hay DOS tecnologías: 1) Cable de fibra óptica y 2) Ondas electromagnéticas (wifi). El texto dice que ambas se integran. Entonces la fibra óptica NO es la única forma, sino UNA SEGUNDA forma de conexión. La opción C dice exactamente eso.'
+    },
+    {
+      id:'c2', num:46,
+      texto:'En el esquema Megazonas wifi, la frecuencia del Grupo 2 es 5 veces mayor que la del Grupo 1. ¿Cómo serían esas ondas?',
+      opciones:['Grupo 1 con más ciclos y Grupo 2 con los mismos ciclos por unidad de tiempo.','Grupo 1 con muchos ciclos y Grupo 2 con muy pocos ciclos.','Grupo 1 y Grupo 2 con pocos ciclos pero el Grupo 2 con menor amplitud.','Grupo 1 con pocos ciclos y Grupo 2 con muchos más ciclos en el mismo tiempo.'],
+      respuesta:3,
+      explicacion:'FRECUENCIA = número de ciclos (ondas completas) por unidad de tiempo. Si el Grupo 2 tiene 5 veces MÁS frecuencia que el Grupo 1, entonces en el mismo tiempo el Grupo 2 tiene 5 veces más ciclos (más onditas juntas). Grupo 1 → pocas ondas. Grupo 2 → muchas ondas comprimidas. Eso describe la opción D.'
+    },
+    {
+      id:'c3', num:47,
+      texto:'En la propuesta Megazonas wifi, mostrar la conexión entre antenas en el esquema se resalta como una fortaleza en la comunicación. ¿Por qué?',
+      opciones:['Porque se puede deducir que cada antena se comunica con una sola antena.','Porque con la conexión entre las antenas se puede determinar qué frecuencias usa cada una.','Porque se puede saber cuántas antenas se necesitan para llevar la señal a la escuela.','Porque ilustra cómo pueden conectarse varias poblaciones entre sí y con una señal muy estable.'],
+      respuesta:3,
+      explicacion:'El esquema Megazonas muestra que MÚLTIPLES cabeceras rurales, escuelas y antenas están todas conectadas entre sí. Eso ilustra que varias poblaciones se pueden interconectar con señal estable. No se trata de frecuencias (eso es otro dato) sino de la CONECTIVIDAD entre poblaciones.'
+    },
+    {
+      id:'c4', num:48,
+      texto:'Las mariposas tienen ciclo: huevo → larva → pupa → adulto, con transformaciones drásticas. ¿A qué modelo de metamorfosis pertenecen?',
+      opciones:['Al modelo 1, porque la mariposa mantiene su forma en todas las etapas.','Al modelo 2, porque en el ciclo de vida de la mariposa existen transformaciones drásticas.','Al modelo 1, porque las alas de la mariposa aparecen en estadios intermedios.','Al modelo 2, porque el ciclo de vida de la mariposa inicia con la fase de huevo.'],
+      respuesta:1,
+      explicacion:'El Modelo 2 se caracteriza por: larvas DIFERENTES a los adultos + fase intermedia pupal. Las mariposas van de oruga (larva) completamente diferente a la mariposa adulta, pasando por una crisálida (pupa). Eso son TRANSFORMACIONES DRÁSTICAS → Modelo 2. El Modelo 1 es cambio gradual (como los grillos).'
+    },
+    {
+      id:'c5', num:49,
+      texto:'Pedro observó que una fruta tardó varios días en descomponerse y concluyó que "todos los cambios químicos necesitan varios días". Un libro dice que la velocidad depende de temperatura, concentración, tamaño de partícula y catalizadores. ¿Es compatible la hipótesis de Pedro?',
+      opciones:['Es compatible, porque tuvo en cuenta las observaciones y consideró que algunas reacciones tardan bastante tiempo.','No es compatible, porque las frutas se descomponen en un día al aire libre.','Es compatible, porque existen factores que aceleran las reacciones.','No es compatible, porque no se puede generalizar que todos los cambios tardan varios días, desconociendo la información del libro.'],
+      respuesta:3,
+      explicacion:'Pedro comete una GENERALIZACIÓN: vio que UNA fruta tardó varios días y concluyó que TODOS los cambios químicos tardan así. Pero el libro dice que la velocidad VARÍA según temperatura, tamaño de partícula, etc. Algunos cambios son instantáneos. Pedro ignora esa información → hipótesis incompatible.'
+    },
+    {
+      id:'c6', num:50,
+      texto:'En el cuero cabelludo, las células capilares se dividen por mitosis y producen fibras de queratina que forman el pelo. ¿Qué papel cumple la mitosis en el pelo?',
+      opciones:['Permite la variabilidad genética del pelo, mediante la recombinación.','Produce células madre, a partir de una fibra de queratina.','Permite el crecimiento del pelo, al aumentar las células del folículo.','Produce células con diferente número de cromosomas.'],
+      respuesta:2,
+      explicacion:'La MITOSIS produce células IDÉNTICAS (mismo número de cromosomas). En el pelo, la mitosis de las células capilares genera MÁS CÉLULAS → el folículo crece → el pelo crece. La variabilidad genética es función de la MEIOSIS, no de la mitosis. La mitosis = crecer/regenerar.'
+    },
+    {
+      id:'c7', num:51,
+      texto:'Dos solutos muestran que su solubilidad aumenta con la temperatura (10°C→100°C). ¿Qué ocurrirá con la solubilidad de ambos a 120°C?',
+      opciones:['Disminuye para los solutos 1 y 2.','Disminuye solo para el soluto 1.','Aumenta para los solutos 1 y 2.','Aumenta solo para el soluto 2.'],
+      respuesta:2,
+      explicacion:'Los datos muestran que AMBOS solutos aumentan su solubilidad al aumentar la temperatura (de 10°C a 100°C la tendencia es siempre creciente). Si la tendencia se mantiene, a 120°C AMBOS seguirán aumentando. La pregunta pide que sigas la tendencia observada en los datos.'
+    },
+    {
+      id:'c8', num:52,
+      texto:'Juan tiene estreñimiento. El médico le explica tipos de compuestos: vitaminas, minerales, fibra insoluble (absorbe agua y favorece el paso de alimentos), fibra soluble (reduce colesterol, retarda digestión). ¿Qué debe consumir Juan?',
+      opciones:['Alimentos ricos en vitaminas.','Alimentos ricos en minerales.','Alimentos ricos en fibra insoluble.','Alimentos ricos en fibra soluble.'],
+      respuesta:2,
+      explicacion:'La FIBRA INSOLUBLE "absorbe agua y favorece el paso de los alimentos por el tracto digestivo y regulariza la función del intestino". El estreñimiento es exactamente una falla en el paso de alimentos por el intestino. La fibra insoluble es la solución directa según la tabla.'
+    },
+    {
+      id:'c9', num:53,
+      texto:'Dos disoluciones del mismo soluto: D1 tiene % p/p=12, % p/v=12, molaridad=2,05. D2 tiene % p/p=24, % p/v=24, molaridad=4,10. Con igual volumen, ¿cuál tiene mayor masa de soluto?',
+      opciones:['La disolución 2, porque a mayor masa de soluto mayor es el valor de la molaridad.','La disolución 1, porque los valores de % p/p y % p/v son mayores que la molaridad.','La disolución 1, porque a mayor masa de soluto menor es el valor de la molaridad.','La disolución 2, porque los valores de % p/p y % p/v son menores que la molaridad.'],
+      respuesta:0,
+      explicacion:'Todos los indicadores de concentración (% p/p, % p/v y molaridad) de D2 son el DOBLE que los de D1. Mayor concentración = más soluto en el mismo volumen. Si el volumen es igual, D2 tiene más masa de soluto. Además, la molaridad de D2 (4,10) es mayor que la de D1 (2,05), lo confirma.'
+    },
+    {
+      id:'c10', num:54,
+      texto:'Plantas con nitrógeno normal: hojas verdes, follaje abundante, crecimiento 60-80 cm, floración semana 8. Plantas con doble nitrógeno: verde intenso, muy abundante, 70-100 cm, semana 5. Plantas SIN nitrógeno: ¿qué resultados probables tendrían?',
+      opciones:['Coloración amarilla, follaje abundante, crecimiento 70-90 cm, floración semana 5.','Coloración verde, follaje abundante, crecimiento 70-90 cm, floración semana 8.','Coloración amarilla, follaje muy poco, crecimiento 30-45 cm, floración semana 10.','Coloración verde, follaje muy poco, crecimiento 30-45 cm, floración semana 2.'],
+      respuesta:2,
+      explicacion:'La tendencia es clara: más nitrógeno = mejor desarrollo. Entonces MENOS nitrógeno = peor desarrollo. Sin nitrógeno: hojas AMARILLAS (falta de clorofila), POCO follaje, MENOR crecimiento, floración MÁS TARDE. La opción C sigue esa lógica inversa. La opción A tiene crecimiento alto que no corresponde.'
+    },
+    {
+      id:'c11', num:55,
+      texto:'Átomos son isótopos si tienen el mismo número de protones pero diferente número de neutrones. Ñ: 1 protón, 0 neutrones. X: 2 protones, 1 neutrón. Y: 1 protón, 2 neutrones. Z: 2 protones, 2 neutrones. ¿Cuáles son isótopos?',
+      opciones:['Ñ y X.','Ñ y Y.','Y y X.','Y y Z.'],
+      respuesta:1,
+      explicacion:'Isótopos = MISMO número de protones, DIFERENTE número de neutrones. Ñ tiene 1 protón. Y tiene 1 protón. ¡Igual! Neutrones: Ñ tiene 0, Y tiene 2. ¡Diferente! → Ñ y Y son isótopos. X y Z tienen 2 protones, pero no coinciden con Ñ ni Y. La clave es buscar igual protones, diferente neutrones.'
+    },
+    {
+      id:'c12', num:56,
+      texto:'Una población de monos fue dividida por un río durante mucho tiempo y terminó siendo dos especies diferentes. ¿Cuál modelo representa el fenómeno?',
+      opciones:['Modelo A: población inicial → aparece el río → aislamiento reproductivo → dos especies distintas.','Modelo B: la población ya aparece dividida desde el inicio.','Modelo C: el aislamiento ocurre antes de que aparezca el río.','Modelo D: la población final no se divide en dos especies distintas.'],
+      respuesta:0,
+      explicacion:'El fenómeno descrito es ESPECIACIÓN ALOPÁTRICA: 1) Había UNA población, 2) Apareció una barrera geográfica (el río), 3) Se separaron reproductivamente, 4) Evolucionaron en dos especies distintas. El modelo correcto muestra esa secuencia: una sola población → barrera → aislamiento → dos especies.'
+    },
+    {
+      id:'c13', num:57,
+      texto:'Un estudiante empuja una mesa ejerciendo una fuerza que aumenta hasta los 4 m, luego ejerce fuerza constante hasta los 6 m. ¿Cuál gráfica de fuerza vs. posición representa esta situación?',
+      opciones:['Una línea que sube hasta 4 m, luego baja hasta 6 m.','Una línea que baja hasta 4 m, luego se mantiene horizontal.','Una línea que sube hasta 4 m, luego se mantiene horizontal hasta 6 m.','Una línea que baja todo el tiempo hasta 6 m.'],
+      respuesta:2,
+      explicacion:'La gráfica debe mostrar: de 0 a 4 m → fuerza AUMENTA (línea que sube). De 4 a 6 m → fuerza CONSTANTE (línea horizontal). Eso es exactamente la opción C: sube hasta 4 m y luego es plana hasta 6 m. En el ICFES, aprende a "leer" gráficas identificando qué pasa en cada tramo.'
+    },
+    {
+      id:'c14', num:61,
+      texto:'Se necesita un material de BAJA DENSIDAD que pueda usarse para láminas de latas de gaseosa (maleable). ¿Cuál es el más adecuado según la tabla?',
+      opciones:['Cobre, porque tiene mayor conductividad y es maleable.','Acero inoxidable, porque tiene el mayor punto de ebullición y alta densidad.','Aluminio, porque posee la menor densidad y es maleable.','Hierro, porque tiene la menor conductividad eléctrica y la mayor densidad.'],
+      respuesta:2,
+      explicacion:'Los requisitos son: 1) BAJA DENSIDAD y 2) MALEABLE. Aluminio: densidad 2,70 g/cm³ (la más baja de la tabla), maleable: Sí. Cobre: densidad 8,96 (alta). Acero: densidad 7,85 (alta). Hierro: densidad 7,87 (alta). El Aluminio es el único que cumple AMBAS condiciones. Por eso se usa en latas de bebidas.'
+    },
+    {
+      id:'c15', num:62,
+      texto:'Los estudiantes midieron los sonidos en la cafetería. El "máximo tolerable" es 70 dB. ¿Qué deberían proponer para no enfermarse?',
+      opciones:['No prender el televisor en horas del descanso o dejarlo con volumen muy reducido.','Prohibir los elementos y las actividades que generan sonidos mayores a 70 decibeles.','No prender el equipo de sonido, sino permitir únicamente los reproductores de música.','Prohibir todos los elementos que generen sonidos durante su funcionamiento, sin importar su intensidad.'],
+      respuesta:1,
+      explicacion:'El umbral "máximo tolerable" es 70 dB. Los sonidos SOBRE ese nivel son dañinos. La solución lógica es prohibir TODO lo que supere 70 dB, sin importar si es televisor, equipo de sonido, o charlas muy fuertes. La opción A solo menciona el televisor (parcial). La opción D es exagerada (prohíbe todo sonido).'
+    },
+    {
+      id:'c16', num:63,
+      texto:'El modelo de Dalton para el amoniaco (NH₃) muestra 1 átomo de nitrógeno (grande/negro) y 3 átomos de hidrógeno (pequeños/blancos). ¿Cuál afirmación es correcta?',
+      opciones:['El amoniaco tiene 8 átomos de hidrógeno.','El amoniaco tiene 3 electrones y 3 protones.','El amoniaco tiene un átomo de nitrógeno y 3 átomos de hidrógeno.','El amoniaco tiene 6 diferentes tipos de átomos enlazados en cadena.'],
+      respuesta:2,
+      explicacion:'NH₃ significa: N = 1 nitrógeno, H₃ = 3 hidrógenos. El modelo de Dalton lo muestra visualmente: 1 esfera grande (N) + 3 esferas pequeñas (H). La fórmula química te dice directamente la cantidad de cada átomo. NH₃ = 1 nitrógeno + 3 hidrógenos. Simple lectura de fórmula química.'
+    },
+    {
+      id:'c17', num:65,
+      texto:'La resistencia eléctrica aumenta con la longitud y disminuye cuando la sección transversal aumenta. El técnico necesita el cable de MENOR resistencia. Cable 1: 10m, 20mm². Cable 2: 4m, 18mm². Cable 3: 4m, 10mm². Cable 4: 10m, 6mm².',
+      opciones:['El cable 4.','El cable 3.','El cable 2.','El cable 1.'],
+      respuesta:2,
+      explicacion:'Para MENOR resistencia: necesitas cable CORTO (poca longitud) y GRUESO (sección grande). Cable 2: longitud corta (4m) y sección grande (18mm²). Cable 1: largo (10m) aunque grueso. Cable 3: corto pero delgado (10mm²). Cable 4: largo y delgado (pésima combinación). El Cable 2 combina corto + grueso.'
+    },
+    {
+      id:'c18', num:67,
+      texto:'En el tiro con arco: se estira la cuerda (almacena energía), se suelta la flecha (viaja hasta el blanco). ¿Cómo varía la energía mecánica del sistema?',
+      opciones:['Al estirar la cuerda se almacena energía cinética; después, al lanzar, toda la energía se convierte en potencial elástica.','Al estirar la cuerda se almacena energía potencial; después, al lanzar, toda la energía sigue almacenada en potencial.','Al estirar la cuerda se almacena energía potencial elástica; después, al lanzar la flecha, toda la energía se convierte en cinética.','Al estirar la cuerda se almacena energía cinética; después, al lanzar, toda la energía sigue siendo cinética.'],
+      respuesta:2,
+      explicacion:'Proceso: 1) Estirar la cuerda → se DEFORMA → energía POTENCIAL ELÁSTICA (energía almacenada en objetos deformados, como resortes). 2) Soltar la flecha → la cuerda vuelve a su forma → esa energía se transforma en movimiento → energía CINÉTICA (energía del movimiento). Potencial elástica → cinética.'
+    },
+    {
+      id:'c19', num:68,
+      texto:'El alcohol al 96% v/v es el más concentrado porque tiene mayor proporción de soluto (alcohol) que la presentación al 70%. ¿Por qué se afirma que el 96% es más concentrado?',
+      opciones:['Porque la cantidad de soluto y de agua es la misma en ambas presentaciones.','Porque la cantidad de la solución es mayor a la del soluto en ambas presentaciones.','Porque la proporción de soluto es baja con respecto a la otra presentación de alcohol.','Porque presenta mayor proporción de soluto que la otra presentación de alcohol.'],
+      respuesta:3,
+      explicacion:'96% v/v significa que en 100 mL de solución hay 96 mL de alcohol. 70% v/v significa que en 100 mL hay 70 mL de alcohol. El 96% tiene MÁS alcohol (soluto) en la misma cantidad de solución. Por eso es MÁS CONCENTRADO: mayor proporción de soluto. Así de simple.'
+    },
+    {
+      id:'c20', num:70,
+      texto:'Se midió el volumen promedio de 10 acacias con hormigas/sin caballos (≈0,5 m³) vs. 10 acacias sin hormigas/con caballos (≈0,1 m³). ¿Es posible concluir que las hormigas son beneficiosas para el árbol?',
+      opciones:['Sí, porque el volumen promedio de los árboles es de 0,1 m³ en presencia de las hormigas.','No, porque se debe determinar el volumen promedio de los árboles en ausencia de AMBAS especies de animales.','No, porque se debe determinar si las hormigas están obteniendo refugio y nutrientes del árbol.','Sí, porque el volumen promedio de los árboles es de 0,5 m³, que es el crecimiento normal de esta especie.'],
+      respuesta:1,
+      explicacion:'El experimento compara: hormigas presentes + caballos ausentes VS. hormigas ausentes + caballos presentes. Hay DOS variables que cambian al mismo tiempo. No puedes saber si el mayor crecimiento (0,5 m³) se debe a las hormigas O a la ausencia de caballos. Para aislar el efecto de las hormigas, necesitarías comparar CON y SIN hormigas manteniendo los caballos igual.'
+    }
+  ],
+  ingles: [
+    {
+      id:'i1', num:71,
+      texto:'At the mall — Match the description: "This is a place to see movies."',
+      opciones:['basement','bathroom','cinema','playground'],
+      respuesta:2,
+      explicacion:'Cinema = movie theater = place to see movies (lugar para ver películas). En el ICFES de inglés, estas preguntas de vocabulario son las más directas. Solo necesitas saber el significado de palabras básicas de lugares: cinema (cine), elevator (ascensor), bookstore (librería), playground (parque de juegos).'
+    },
+    {
+      id:'i2', num:72,
+      texto:'At the mall — Match: "People get on this to go to different floors."',
+      opciones:['bookstore','café','elevator','cinema'],
+      respuesta:2,
+      explicacion:'Elevator = ascensor (dispositivo para subir y bajar pisos). "Get on" significa subirse. "Different floors" = diferentes pisos. En un mall (centro comercial), el ascensor te lleva de un piso a otro. Elevator es la palabra en inglés americano; en inglés británico se dice "lift".'
+    },
+    {
+      id:'i3', num:73,
+      texto:'At the mall — Match: "This is a fun park where children jump and run."',
+      opciones:['basement','playground','bookstore','café'],
+      respuesta:1,
+      explicacion:'Playground = parque de juegos (lugar donde los niños juegan, saltan y corren). "Fun park" da la pista de que es un lugar de diversión. "Jump and run" = saltar y correr, actividades típicas de niños. En malls modernos hay playgrounds para que los niños jueguen.'
+    },
+    {
+      id:'i4', num:74,
+      texto:'At the mall — Match: "This is a shop to find things to read."',
+      opciones:['basement','bathroom','bookstore','playground'],
+      respuesta:2,
+      explicacion:'Bookstore = librería (tienda donde se venden libros y cosas para leer). "Things to read" = cosas para leer → libros, revistas, etc. Book = libro, store = tienda. Si en el examen ves una palabra que desconoces, trata de dividirla en partes: "book" + "store".'
+    },
+    {
+      id:'i5', num:75,
+      texto:'At the mall — Match: "People buy a cup of coffee here."',
+      opciones:['basement','bathroom','bookstore','café'],
+      respuesta:3,
+      explicacion:'Café = cafetería (lugar donde se compra y toma café). "A cup of coffee" = una taza de café. Esta es quizás la más fácil porque "café" es casi igual en español. En inglés también se puede decir "coffee shop". La palabra viene del francés y se usa en todo el mundo.'
+    },
+    {
+      id:'i6', num:76,
+      texto:'Where can you see this sign? "Put teddy bears, dolls and board games in here."',
+      opciones:['in a sand box','in a toy box','in a story box'],
+      respuesta:1,
+      explicacion:'Teddy bears (osos de peluche) + dolls (muñecas) + board games (juegos de mesa) son todos JUGUETES (toys). El aviso pide ponerlos adentro de una caja → toy box = caja de juguetes. "Put... in here" = pon/guarda aquí. Este tipo de aviso se ve en cuartos de niños o zonas de juegos.'
+    },
+    {
+      id:'i7', num:77,
+      texto:'Where can you see this sign? "Sing with us! Tom and the Bird show. Come after math class."',
+      opciones:['in a zoo','in a school','in a cinema'],
+      respuesta:1,
+      explicacion:'"Come after MATH CLASS" es la clave. Math class = clase de matemáticas. Si hay clases, estás en una ESCUELA (school). El show "Tom and the Bird" sería una actividad extracurricular en el colegio. En ningún zoo ni cine habría clases de matemáticas.'
+    },
+    {
+      id:'i8', num:78,
+      texto:'Where can you see this sign? "With milk, eggs and chocolate."',
+      opciones:['on a cake box','on a juice box','on a pasta box'],
+      respuesta:0,
+      explicacion:'Milk (leche) + eggs (huevos) + chocolate son ingredientes clásicos de un PASTEL/TORTA. Cake = torta/pastel. Cake box = caja de torta. Los ingredientes de jugo serían frutas. Los de pasta serían harina, tomate, etc. Piensa: ¿qué se hace con leche, huevos y chocolate? → torta.'
+    },
+    {
+      id:'i9', num:79,
+      texto:'Where can you see this sign? "Bus 20A to Apple Street. 5:00 am to 6:00 pm."',
+      opciones:['at a library','at a cafeteria','at a station'],
+      respuesta:2,
+      explicacion:'Bus (autobús/bus) + route (ruta: Apple Street) + horarios de salida → esto es un anuncio de transporte público. Station = estación (de buses o metro). Los horarios de 5am a 6pm son típicos de servicios de transporte. En una biblioteca o cafetería no verías rutas de bus.'
+    },
+    {
+      id:'i10', num:80,
+      texto:'Where can you see this sign? "Pet inside the room. Please do not clean."',
+      opciones:['in a hospital','in a hotel','in a park'],
+      respuesta:1,
+      explicacion:'"Do not clean the room" = no limpies la habitación. Esto es un aviso típico de HOTEL que los huéspedes ponen en la puerta para que el personal de limpieza no entre. "Pet inside" = hay una mascota adentro, razón adicional para no entrar. En hospitales o parques no hay habitaciones que limpiar.'
+    },
+    {
+      id:'i11', num:81,
+      texto:'Complete the conversation: "Did you forget the appointment?"',
+      opciones:['Maybe next time.','I guess I did.','It finished late.'],
+      respuesta:1,
+      explicacion:'"Did you forget the appointment?" = ¿Olvidaste la cita? La respuesta lógica es "I guess I did" = Creo que sí (admitiendo que olvidó). "Maybe next time" = Tal vez la próxima vez (no tiene sentido como respuesta directa). "It finished late" = Terminó tarde (no responde la pregunta).'
+    },
+    {
+      id:'i12', num:82,
+      texto:'Complete: "You have to eat breakfast every morning!"',
+      opciones:["You're right.",'Let\'s have lunch.','Fruit is good.'],
+      respuesta:0,
+      explicacion:'"You have to eat breakfast every morning!" = ¡Tienes que desayunar todas las mañanas! La respuesta más natural es "You\'re right" = Tienes razón (concordando con el consejo). "Let\'s have lunch" no tiene sentido (es hora de almorzar, no de desayunar). "Fruit is good" no responde directamente.'
+    },
+    {
+      id:'i13', num:83,
+      texto:'Complete: "How often do you dance?"',
+      opciones:['I need a break.','Not everyone practices.','Most weekends.'],
+      respuesta:2,
+      explicacion:'"How often?" = ¿Con qué frecuencia? Siempre se responde con una expresión de TIEMPO/FRECUENCIA: always (siempre), sometimes (a veces), every day (todos los días), most weekends (la mayoría de los fines de semana). Las otras opciones no responden "con qué frecuencia".'
+    },
+    {
+      id:'i14', num:84,
+      texto:'Complete: "Was the oven finally repaired?"',
+      opciones:['I ordered pizza.',"It's still not working.",'Did you finish?'],
+      respuesta:1,
+      explicacion:'"Was the oven repaired?" = ¿Finalmente arreglaron el horno? "It\'s still not working" = Todavía no funciona. Esta respuesta responde directamente si el horno fue reparado o no. "I ordered pizza" podría ser consecuencia (si no hay horno, pides pizza), pero no responde la pregunta directamente.'
+    },
+    {
+      id:'i15', num:85,
+      texto:'Complete: "You should call the waiter to pay the bill."',
+      opciones:['Are you sure?','Congratulations.','Thank me!'],
+      respuesta:0,
+      explicacion:'"You should call the waiter to pay the bill" = Deberías llamar al mesero para pagar la cuenta. "Are you sure?" = ¿Estás seguro? Es una respuesta natural cuando alguien te sugiere algo (verificando si es el momento correcto o si estás listo para irse). Las otras opciones no tienen sentido en contexto.'
+    },
+    {
+      id:'i16', num:86,
+      texto:'Luthiers text — Fill in blank 86: "they (86)_____ choose instruments that belong to a type"',
+      opciones:['often','once','ever'],
+      respuesta:0,
+      explicacion:'"Often" = frecuentemente/a menudo. La oración dice que los luthiers pueden trabajar con diferentes instrumentos, PERO frecuentemente se especializan en un tipo. "Often" expresa esa frecuencia habitual. "Once" = una vez (solo una). "Ever" = alguna vez (se usa en preguntas y negativos).'
+    },
+    {
+      id:'i17', num:87,
+      texto:'Luthiers text — Fill in blank 87: "violins and guitars that are (87)_____ similar"',
+      opciones:['enough','over','quite'],
+      respuesta:2,
+      explicacion:'"Quite" = bastante/muy (modifica adjetivos). "Quite similar" = bastante similares. "Enough" va después del adjetivo: "similar enough" (pero así no aparece en el texto). "Over" = sobre/más de (no modifica adjetivos de esta forma). Aprende: quite/very/rather + adjective.'
+    },
+    {
+      id:'i18', num:88,
+      texto:'Luthiers text — Fill in blank 88: "They use (88)_____ materials, from wood to metal"',
+      opciones:['every','several','less'],
+      respuesta:1,
+      explicacion:'"Several" = varios/as (para cantidades no específicas). "They use several materials" = usan varios materiales (madera, metal, etc.). "Every" va seguido de sustantivo singular: "every material" (no materials). "Less" es comparativo de "little" y no encaja aquí. Several + plural noun = varios.'
+    },
+    {
+      id:'i19', num:94,
+      texto:'Golf reading — "Making a stroke means..."',
+      opciones:['giving instructions.','taking a hole.','hitting the ball.'],
+      respuesta:2,
+      explicacion:'El texto dice: "When the player hits the ball, it is called a stroke." Stroke = cuando el jugador GOLPEA (hits) la pelota. Hitting the ball = golpear la pelota. El texto lo define explícitamente. En el ICFES de inglés, la respuesta casi siempre está escrita en el texto, solo debes encontrarla.'
+    },
+    {
+      id:'i20', num:95,
+      texto:'Golf reading — "Where did people play golf for the first time?"',
+      opciones:['the Netherlands','Scotland','the United States'],
+      respuesta:0,
+      explicacion:'El texto dice: "Historians believe that early forms of golf were played in the Netherlands and then in Scotland." El PRIMER lugar mencionado es los Países Bajos (Netherlands). Luego fue a Escocia. Luego a EE.UU. La palabra "first" en la pregunta te indica buscar el primer lugar mencionado.'
+    }
+  ]
+};
+
+// ========== ESTADO GLOBAL ==========
+const AREA_INFO = {
+  sociales:   { nombre: 'Sociales y Ciudadanas', color: '#1565c0', fill: '#bbdefb', icon: '🌎' },
+  matematicas:{ nombre: 'Matemáticas',            color: '#6a1b9a', fill: '#e1bee7', icon: '📐' },
+  ciencias:   { nombre: 'Ciencias Naturales',     color: '#2e7d32', fill: '#c8e6c9', icon: '🔬' },
+  ingles:     { nombre: 'Inglés',                  color: '#e65100', fill: '#ffe0b2', icon: '🇬🇧' }
+};
+
+let state = {
+  selectedAreas: [],
+  sessionQuestions: [],  // [{area, q}]
+  currentIdx: 0,
+  answers: [],           // {area, qId, correct}
+  sessionScore: 0,
+  totalQ: 0,
+  stats: loadStats()
+};
+
+function loadStats() {
+  try { return JSON.parse(localStorage.getItem('icfes_stats') || '{}'); } catch(e) { return {}; }
+}
+function saveStats() {
+  localStorage.setItem('icfes_stats', JSON.stringify(state.stats));
+}
+
+// ========== UTILS ==========
+function getTodayKey() {
+  return new Date().toISOString().slice(0,10);
+}
+function shuffle(arr) {
+  const a = [...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+
+// ========== NAVEGACIÓN ==========
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  const idx = ['home','quiz','stats'].indexOf(id);
+  document.querySelectorAll('.nav-btn')[idx < 2 ? idx : 2].classList.add('active');
+  if(id==='home') renderHome();
+  if(id==='stats') renderStats();
+}
+
+// ========== HOME ==========
+function renderHome() {
+  document.getElementById('fecha-hoy').textContent = new Date().toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+  // Today info
+  const todayKey = getTodayKey();
+  const todayData = state.stats[todayKey];
+  let todayHtml = '';
+  if(todayData) {
+    todayHtml = `<div class="today-badge">✅ Hoy completaste ${todayData.total} preguntas — Puntaje: <strong>${todayData.correct}/${todayData.total}</strong></div>`;
+  }
+  document.getElementById('today-info').innerHTML = todayHtml;
+
+  // Area cards
+  const grid = document.getElementById('area-grid');
+  grid.innerHTML = '';
+  Object.entries(AREA_INFO).forEach(([key,info]) => {
+    const qs = PREGUNTAS[key] || [];
+    const total = state.stats['total_'+key] || 0;
+    const correct = state.stats['correct_'+key] || 0;
+    const pct = total > 0 ? Math.round((correct/total)*100) : 0;
+    const sel = state.selectedAreas.includes(key);
+    grid.innerHTML += `
+      <div class="area-card ${sel?'selected':''}" onclick="toggleArea('${key}')" id="card-${key}">
+        <div class="icon">${info.icon}</div>
+        <h3>${info.nombre}</h3>
+        <p style="font-size:12px;color:#666;margin-top:4px;">${qs.length} preguntas disponibles</p>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <div class="pct">${total>0?`${correct}/${total} correctas (${pct}%)`:'Sin intentos aún'}</div>
+      </div>`;
+  });
+  updateStartBtn();
+}
+
+function toggleArea(key) {
+  const idx = state.selectedAreas.indexOf(key);
+  if(idx>=0) state.selectedAreas.splice(idx,1);
+  else state.selectedAreas.push(key);
+  document.querySelectorAll('.area-card').forEach(c=>c.classList.remove('selected'));
+  state.selectedAreas.forEach(k=>{ const el=document.getElementById('card-'+k); if(el) el.classList.add('selected'); });
+  updateStartBtn();
+}
+
+function updateStartBtn() {
+  const btn = document.getElementById('start-btn');
+  if(state.selectedAreas.length===0) { btn.disabled=true; btn.textContent='Selecciona al menos un área'; }
+  else { btn.disabled=false; btn.textContent=`▶ Comenzar (${state.selectedAreas.length} área${state.selectedAreas.length>1?'s':''} · ${state.selectedAreas.length*5} preguntas)`; }
+}
+
+// ========== INICIAR QUIZ ==========
+function startQuiz() {
+  const todayKey = getTodayKey();
+  const usedToday = state.stats['used_'+todayKey] || {};
+
+  let sessionQ = [];
+  state.selectedAreas.forEach(area => {
+    const pool = PREGUNTAS[area] || [];
+    const usedIds = usedToday[area] || [];
+    const available = pool.filter(q => !usedIds.includes(q.id));
+    const pick = shuffle(available.length >= 5 ? available : pool).slice(0,5);
+    pick.forEach(q => sessionQ.push({area, q}));
+  });
+
+  state.sessionQuestions = shuffle(sessionQ);
+  state.currentIdx = 0;
+  state.answers = [];
+  state.sessionScore = 0;
+  state.totalQ = state.sessionQuestions.length;
+
+  showPage('quiz');
+  renderQuestion();
+}
+
+// ========== QUIZ ==========
+function renderQuestion() {
+  const {area, q} = state.sessionQuestions[state.currentIdx];
+  const info = AREA_INFO[area];
+  const num = state.currentIdx + 1;
+  const total = state.totalQ;
+
+  document.getElementById('quiz-area-tag').textContent = info.icon + ' ' + info.nombre;
+  document.getElementById('quiz-area-tag').style.background = info.fill;
+  document.getElementById('quiz-area-tag').style.color = info.color;
+  document.getElementById('quiz-progress').textContent = `${num} de ${total}`;
+  document.getElementById('quiz-score-live').textContent = `✓ ${state.sessionScore}`;
+  document.getElementById('progress-bar').style.width = ((num-1)/total*100) + '%';
+
+  const opts = q.opciones.map((o,i) => `
+    <button class="option-btn" onclick="selectOption(${i})" id="opt-${i}">
+      <span class="letra">${['A','B','C','D'][i]}</span>
+      <span>${o}</span>
+    </button>`).join('');
+
+  document.getElementById('quiz-content').innerHTML = `
+    <div class="question-box">
+      <div class="question-num">Pregunta ${num}</div>
+      <div class="question-text">${q.texto}</div>
+    </div>
+    <div class="options" id="options-container">${opts}</div>
+    <div id="feedback-area"></div>`;
+}
+
+async function selectOption(idx) {
+  const {area, q} = state.sessionQuestions[state.currentIdx];
+  const isCorrect = idx === q.respuesta;
+
+  // Disable all buttons
+  document.querySelectorAll('.option-btn').forEach(b=>b.disabled=true);
+  document.getElementById('opt-'+q.respuesta).classList.add('correct');
+  if(!isCorrect) document.getElementById('opt-'+idx).classList.add('wrong');
+
+  if(isCorrect) state.sessionScore++;
+  state.answers.push({area, qId:q.id, correct:isCorrect});
+
+  // Feedback
+  const fb = document.getElementById('feedback-area');
+  if(isCorrect) {
+    fb.innerHTML = `<div class="feedback-box correct">
+      <div class="feedback-title correct">✅ ¡Correcto!</div>
+      <div class="feedback-text">${q.explicacion}</div>
+    </div>
+    <button class="next-btn" onclick="nextQuestion()">${state.currentIdx+1 < state.totalQ ? '→ Siguiente pregunta' : '🏁 Ver resultados'}</button>`;
+  } else {
+    fb.innerHTML = `<div class="feedback-box wrong">
+      <div class="feedback-title wrong">❌ Incorrecto — La respuesta era <strong>${['A','B','C','D'][q.respuesta]}</strong></div>
+      <div class="feedback-text loading-explanation">💡 ${q.explicacion}</div>
+    </div>
+    <button class="next-btn" onclick="nextQuestion()">${state.currentIdx+1 < state.totalQ ? '→ Siguiente pregunta' : '🏁 Ver resultados'}</button>`;
+  }
+}
+
+function nextQuestion() {
+  state.currentIdx++;
+  if(state.currentIdx >= state.totalQ) {
+    saveSession();
+    showResults();
+  } else {
+    renderQuestion();
+  }
+}
+
+function saveSession() {
+  const todayKey = getTodayKey();
+  if(!state.stats[todayKey]) state.stats[todayKey] = {correct:0, total:0, areas:{}};
+
+  const usedToday = state.stats['used_'+todayKey] || {};
+
+  state.answers.forEach(({area,qId,correct})=>{
+    state.stats['total_'+area] = (state.stats['total_'+area]||0)+1;
+    if(correct) state.stats['correct_'+area] = (state.stats['correct_'+area]||0)+1;
+    state.stats[todayKey].total++;
+    if(correct) state.stats[todayKey].correct++;
+    if(!state.stats[todayKey].areas[area]) state.stats[todayKey].areas[area]={correct:0,total:0};
+    state.stats[todayKey].areas[area].total++;
+    if(correct) state.stats[todayKey].areas[area].correct++;
+    if(!usedToday[area]) usedToday[area]=[];
+    if(!usedToday[area].includes(qId)) usedToday[area].push(qId);
+  });
+
+  state.stats['used_'+todayKey] = usedToday;
+
+  // History
+  if(!state.stats.history) state.stats.history=[];
+  state.stats.history.unshift({date:todayKey, correct:state.sessionScore, total:state.totalQ, areas:Object.keys(AREA_INFO).filter(k=>state.selectedAreas.includes(k))});
+  if(state.stats.history.length>30) state.stats.history=state.stats.history.slice(0,30);
+
+  saveStats();
+}
+
+// ========== RESULTADOS ==========
+function showResults() {
+  showPage('results');
+  const pct = Math.round((state.sessionScore/state.totalQ)*100);
+  let emoji = pct>=80?'🏆':pct>=60?'👍':pct>=40?'📚':'💪';
+  let msg = pct>=80?'¡Excelente! Estás muy bien preparado.':pct>=60?'¡Bien! Sigue practicando.':pct>=40?'Vas bien, pero repasa los temas.':'No te rindas, la práctica hace al maestro.';
+
+  // By area
+  const byArea = {};
+  state.answers.forEach(({area,correct})=>{
+    if(!byArea[area]) byArea[area]={c:0,t:0};
+    byArea[area].t++;
+    if(correct) byArea[area].c++;
+  });
+
+  const areaCards = Object.entries(byArea).map(([area,data])=>{
+    const info = AREA_INFO[area];
+    const p = Math.round((data.c/data.t)*100);
+    return `<div class="area-result-item">
+      <div class="ar-name">${info.icon} ${info.nombre}</div>
+      <div class="ar-score" style="color:${info.color}">${data.c}/${data.t}</div>
+      <div class="ar-bar"><div class="ar-fill" style="width:${p}%;background:${info.color}"></div></div>
+      <div style="font-size:11px;color:#888;margin-top:3px">${p}%</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('results-content').innerHTML = `
+    <div class="result-card">
+      <div class="emoji-big">${emoji}</div>
+      <div class="result-score">${state.sessionScore}/${state.totalQ}</div>
+      <div class="result-label">preguntas correctas</div>
+      <div style="font-size:28px;font-weight:700;color:#1a237e;margin-top:8px">${pct}%</div>
+      <div class="result-msg">${msg}</div>
+    </div>
+    <div class="area-results">${areaCards}</div>
+    <button class="home-btn-r" onclick="state.selectedAreas=[];showPage('home')">🏠 Volver al inicio</button>
+    <button class="repeat-btn" onclick="startQuiz()">🔄 Repetir con las mismas áreas</button>`;
+
+  document.querySelectorAll('.nav-btn')[0].classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach((b,i)=>{ if(i!==0) b.classList.remove('active'); });
+}
+
+// ========== ESTADÍSTICAS ==========
+function renderStats() {
+  const areas = Object.entries(AREA_INFO);
+  const areaStats = areas.map(([key,info])=>{
+    const total = state.stats['total_'+key]||0;
+    const correct = state.stats['correct_'+key]||0;
+    const pct = total>0?Math.round((correct/total)*100):0;
+    return `<div class="area-stat">
+      <div class="area-stat-name"><span>${info.icon} ${info.nombre}</span><span style="color:${info.color}">${correct}/${total} (${pct}%)</span></div>
+      <div class="area-stat-bar"><div class="area-stat-fill" style="width:${pct}%;background:${info.color}"></div></div>
+    </div>`;
+  }).join('');
+
+  const history = state.stats.history || [];
+  const histHtml = history.length===0
+    ? '<p style="color:#999;font-size:13px;text-align:center;padding:16px">Aún no tienes sesiones guardadas.</p>'
+    : history.slice(0,10).map(h=>{
+        const pct=Math.round((h.correct/h.total)*100);
+        const color=pct>=80?'#2e7d32':pct>=60?'#e65100':'#c62828';
+        const fecha=new Date(h.date+'T12:00:00').toLocaleDateString('es-CO',{weekday:'short',day:'numeric',month:'short'});
+        return `<div class="day-item">
+          <span>${fecha} · ${h.areas?.map(a=>AREA_INFO[a]?.icon||'').join(' ')||''}</span>
+          <span class="day-score-tag" style="background:${color}20;color:${color}">${h.correct}/${h.total} — ${pct}%</span>
+        </div>`;
+      }).join('');
+
+  // Totals
+  let totalC=0, totalT=0;
+  areas.forEach(([k])=>{ totalC+=state.stats['correct_'+k]||0; totalT+=state.stats['total_'+k]||0; });
+  const globalPct = totalT>0?Math.round((totalC/totalT)*100):0;
+
+  document.getElementById('stats-content').innerHTML = `
+    <div class="stats-card">
+      <div class="stats-title">📊 Resumen global</div>
+      <div class="stat-row"><span class="stat-label">Total preguntas respondidas</span><span class="stat-val">${totalT}</span></div>
+      <div class="stat-row"><span class="stat-label">Correctas</span><span class="stat-val">${totalC}</span></div>
+      <div class="stat-row"><span class="stat-label">Porcentaje global</span><span class="stat-val">${globalPct}%</span></div>
+      <div class="stat-row"><span class="stat-label">Sesiones realizadas</span><span class="stat-val">${history.length}</span></div>
+    </div>
+    <div class="stats-card">
+      <div class="stats-title">📚 Por área</div>
+      ${areaStats}
+    </div>
+    <div class="stats-card">
+      <div class="stats-title">📅 Historial reciente</div>
+      <div class="day-history">${histHtml}</div>
+    </div>
+    <button class="clear-btn" onclick="clearStats()">🗑 Borrar todas las estadísticas</button>`;
+}
+
+function clearStats() {
+  if(confirm('¿Seguro que quieres borrar todas las estadísticas?')) {
+    state.stats={};
+    saveStats();
+    renderStats();
+  }
+}
+
+// ========== INIT ==========
+window.onload = () => {
+  renderHome();
+};
+</script>
+</body>
+</html>
